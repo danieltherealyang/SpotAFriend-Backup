@@ -1,3 +1,4 @@
+# This is a backup repo for archival purposes
 # Spot A Friend
 
 Spring 2022 CS 35L group project by Brian Ni, Jenny Wang, Nathan Zhang, Jeffrey Zhou, and Daniel Yang.
