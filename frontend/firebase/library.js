@@ -1,8 +1,5 @@
 import { set, update, ref, get, child, remove, push } from "firebase/database";
 import { db } from "../firebase/index.js";
-import { useState } from 'react';
-import { arrayBuffer } from 'stream/consumers';
-
 
 export function EditUserAttrib(userobj, attrib, value, func, setUser) {
     var userExists = true;
