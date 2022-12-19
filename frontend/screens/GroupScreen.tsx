@@ -35,7 +35,7 @@ interface Group {
   group: string;
 }
 
-function PopulateArray(user, groupData: Group[]) {
+function PopulateArray(user: any, groupData: Group[]) {
   // const [testArray, setTest] = useState([]);
   // var getGroupMembers = async () => {
   //   await GetGroupMembers('danielsgroup').then((value) => setTest(value));
@@ -53,6 +53,7 @@ function PopulateArray(user, groupData: Group[]) {
   var getGroupMembers = async (group: string, setState: Function) => {
     await GetGroupMembers(group).then((members) => {
       setState(members);
+      console.log(members);
     });
   };
 
@@ -109,6 +110,7 @@ const GroupCard = (props: any) => {
     }
   });
   const memberString = members.join(", ");
+  const uri = imageURL ? imageURL : null;
   return (
     <View style={{ backgroundColor: "transparent" }}>
       <Modal
@@ -128,7 +130,7 @@ const GroupCard = (props: any) => {
                 {GROUPNAME}'s target of the day
               </Text>
             </View>
-            <Image style={styles.targetImage} source={{ uri: imageURL }} />
+            <Image style={styles.targetImage} source={{ uri: uri }} />
             <View style={{ backgroundColor: "transparent" }}>
               <Text style={styles.modalText}>today's target: {target}</Text>
               <Text style={styles.names}>all members: {memberString}</Text>
@@ -152,7 +154,7 @@ const GroupCard = (props: any) => {
           style={styles.groupOpen}
           onPress={() => setModalVisible(true)}
         >
-          <Image style={styles.groupImage} source={{ uri: imageURL }} />
+          <Image style={styles.groupImage} source={{ uri: uri }} />
           <View
             style={{
               margin: "5%",
@@ -212,10 +214,10 @@ export default function GroupScreen({
   navigation,
 }: RootTabScreenProps<"Group">) {
   const { user } = useContext(UserContext);
-  console.log(user.groups);
 
   const groupData: Group[] = [];
   PopulateArray(user, groupData);
+  // console.log(groupData);
 
   return (
     <View style={styles.container}>
@@ -242,9 +244,10 @@ export default function GroupScreen({
           marginTop: "10%",
         }}
       >
-        {groupData.map((arrayItem) => {
+        {!groupData.length && <Text>You are not part of any groups!</Text>}
+        {groupData.map((arrayItem, index) => {
           return (
-            <GroupCard members={arrayItem.members} group={arrayItem.group} />
+            <GroupCard key={index} members={arrayItem.members} group={arrayItem.group} />
           );
         })}
       </ScrollView>

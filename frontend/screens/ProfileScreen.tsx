@@ -4,7 +4,7 @@ import { Text, View } from "../components/Themed";
 import { RootStackParamList } from "../types";
 import { UserContext } from "../components/UserContext";
 import { storage } from "../firebase/index";
-import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import { ref, getDownloadURL, uploadBytesResumable } from "firebase/storage";
 import * as ImagePicker from "expo-image-picker";
 import { db } from "../firebase/index";
 import { Image as CacheImage} from "react-native-expo-image-cache";
@@ -40,9 +40,10 @@ export default function ProfileScreen({
       aspect: [4, 3],
       quality: 1,
     });
-    if (!result.cancelled) {
+    if (!result.canceled) {
       // update photo as needed
-      imageURL = (await uploadImageAsync(result.uri, username)).toString();
+      imageURL = (await uploadImageAsync(result.assets[0].uri, username)).toString();
+      console.log(imageURL);
       update(dbref(db, "users/" + username), { profilePhotoRef: imageURL });
     }
     setImage(imageURL);
@@ -55,7 +56,7 @@ export default function ProfileScreen({
           <Image style={styles.targetImage} source={{ uri: imageURL }} />
         </View>
       )}
-      <TouchableOpacity style={styles.row} onPress={pickImage}>
+      <TouchableOpacity style={styles.row} onPress={async () => await pickImage()}>
         <View style={styles.label}>
           <Text
             style={{
@@ -97,7 +98,7 @@ async function uploadImageAsync(uri: any, username: any) {
   const fileRef = ref(storage, "profilephotos/" + username);
   const img = await fetch(uri);
   const bytes = await img.blob();
-  const result = await uploadBytes(fileRef, bytes);
+  const result = await uploadBytesResumable(fileRef, bytes);
   return await getDownloadURL(fileRef);
 }
 

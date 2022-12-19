@@ -6,7 +6,7 @@ import {
   View,
   TouchableOpacity,
   _Text,
-  ImageBackground,
+  ImageBackground
 } from "react-native";
 import { Camera } from "expo-camera";
 import { RootStackScreenProps } from "../types";
@@ -22,6 +22,8 @@ import {
 } from "firebase/database";
 import { useNavigation } from "@react-navigation/native";
 
+import { Emitter } from '../event/index';
+
 export default function App({ navigation }: RootStackScreenProps<"Modal">) {
   let nav = useNavigation();
   let camera: Camera;
@@ -34,11 +36,16 @@ export default function App({ navigation }: RootStackScreenProps<"Modal">) {
 
   const { user } = useContext(UserContext);
 
+  Emitter.addListener('ResetCamera', () => {
+    setPreviewVisible(false);
+    setCapturedImage(null);
+  });
   useEffect(() => {
     (async () => {
       const { status } = await Camera.requestCameraPermissionsAsync();
       setHasPermission(status === "granted");
     })();
+    return() => {Emitter.removeListener('ResetCamera');};
   }, []);
 
   if (hasPermission === null) {

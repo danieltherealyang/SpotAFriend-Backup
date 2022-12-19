@@ -28,6 +28,7 @@ export default function FriendsScreen({
   // const { cancel } = route.params;
   const { user } = useContext(UserContext);
   var [friendsList, setList] = useState([]);
+  console.log(friendsList);
   var getList = async () => {
     await GetFriendsList(user).then((value) => setList(value));
   };
@@ -53,13 +54,14 @@ export default function FriendsScreen({
         <Logo></Logo>
         <SettingsButton {...navigation} />
       </View>
-      <Header navigation={navigation} />
+      <Header navigation={navigation} updateList={async () => await getList()}/>
       <Divider />
       <FriendList
         // cancel={cancel}
         navigation={navigation}
         friends={friendsList}
         user={user}
+        updateList={async () => await getList()}
       />
     </View>
   );
@@ -106,12 +108,14 @@ function Logo() {
 function FriendList(props: any) {
   var friendlist = props.friends.map((friend: any, index: any) => (
     <Friend
+      key={index}
       name={friend}
       removeHandler={async () => {
         await RemoveFriend(props.user, index);
         props.navigation.navigate("Friends", {
           cancel: props.cancel,
         });
+        props.updateList();
       }}
     />
   ));
@@ -255,6 +259,8 @@ function Header(props: any) {
                   props.navigation.navigate("Friends", {
                     cancel: props.cancel,
                   });
+                setShowModal(!showModal);
+                props.updateList();
               }}
             />
             <Text style={{ color: "#BF0603" }}>{statusMessage}</Text>
@@ -286,7 +292,7 @@ function SearchBar(props: any) {
       <TextInput
         placeholder="add friends"
         keyboardType="default"
-        style={{ width: "80%" }}
+        style={{ flex: 1 }}
         placeholderTextColor="grey"
         onChangeText={(text) => props.inputHandle(text)}
       />
@@ -456,8 +462,9 @@ const styles = StyleSheet.create({
     borderRadius: 15,
     width: 330,
     height: 40,
+    paddingLeft: 10,
+    paddingRight: 10,
     alignContent: "center",
-    padding: 10,
     flexDirection: "row",
     justifyContent: "space-between",
   },

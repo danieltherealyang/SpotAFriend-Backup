@@ -6,7 +6,7 @@ import { UserContext } from "../components/UserContext";
 
 import { default as theme } from "../theme.json";
 import { RootStackScreenProps } from "../types";
-import { getStorage, ref, getDownloadURL, uploadBytes } from "firebase/storage";
+import { getStorage, ref, getDownloadURL, uploadBytesResumable } from "firebase/storage";
 import { db } from "../firebase/index";
 import {
   getDatabase,
@@ -16,12 +16,16 @@ import {
   update,
 } from "firebase/database";
 
+import { Emitter } from '../event/index';
+
 export default function PostScreen({
   navigation,
   route,
 }: RootStackScreenProps<"Root">) {
   const { URI } = route.params;
   const storage = getStorage();
+  // const eventEmitter = new NativeEventEmitter();
+  const reset = () => {Emitter.emit('ResetCamera', {});};
 
   // const [image, setImage] = useState("");
   const { user } = useContext(UserContext);
@@ -50,19 +54,19 @@ export default function PostScreen({
     );
     const img = await fetch(URI); //to string necessary?
     const bytes = await img.blob();
-    const result = await uploadBytes(fileRef, bytes);
+    const result = await uploadBytesResumable(fileRef, bytes);
 
     let imageURL = (await getDownloadURL(fileRef)).toString();
     console.log(imageURL);
-    set(dbref(db, "groups/" + pickedGroup + "/users/" + username + "/"), { tag: pickedTag });
-    // update(dbref(db, "users/" + user.username), { dailyPhotoRef: imageURL });
+    //set(dbref(db, "groups/" + pickedGroup + "/users/" + username + "/"), { tag: pickedTag });
+    update(dbref(db, "users/" + user.username), { dailyPhotoRef: imageURL });
   }
 
   function PostButton() {
     return (
       <TouchableOpacity
         style={styles.PostButtonStyling}
-        onPress={() => PostHandler()}
+        onPress={() => PostHandler(reset)}
       >
         <Text style={styles.PostButtonTextStyling}>post</Text>
       </TouchableOpacity>
@@ -85,8 +89,9 @@ export default function PostScreen({
     return;
   }
 
-  function PostHandler() {
+  function PostHandler(reset: any) {
     uploadImageAsync();
+    reset();
     navigation.navigate("Root", { screen: "Home" });
     return;
   }
@@ -95,8 +100,8 @@ export default function PostScreen({
     const { user } = useContext(UserContext);
     const groups = user.groups;
 
-    let groupslist = [{ label: groups[0], value: groups[0] }];
-    for (let i = 1; i < groups.length; i++) {
+    let groupslist = groups ? [{ label: groups[0], value: groups[0] }] : [];
+    for (let i = 1; i < groupslist.length; i++) {
       var obj = { label: groups[i], value: groups[i].toString() };
       groupslist.push(obj);
     }
@@ -221,8 +226,8 @@ export default function PostScreen({
       </View>
       <View style={styles.ButtonContainer}>
         <View style={styles.row}>
-          <PostButton />
           <CancelButton />
+          <PostButton />
         </View>
       </View>
     </View>
@@ -255,10 +260,11 @@ const styles = StyleSheet.create({
     height: "10%",
   },
   PostButtonStyling: {
-    marginBottom: 20,
     padding: 20,
     width: "30%",
     backgroundColor: theme["color-button-fill-blue"],
+    borderColor: theme["color-button-fill-blue"],
+    borderWidth: 2,
     borderRadius: 50,
   },
   CancelButtonStyling: {
