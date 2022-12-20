@@ -104,8 +104,7 @@ export default function App({ navigation }: RootStackScreenProps<"Modal">) {
         >
           <View style={styles.row}>
             <TouchableOpacity style={styles.ring} onPress={__takePicture}>
-              <TouchableOpacity
-                onPress={__takePicture}
+              <View
                 style={styles.takepic}
               />
             </TouchableOpacity>

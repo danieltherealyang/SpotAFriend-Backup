@@ -28,7 +28,7 @@ export default function EditInfo({ route, navigation } : any) {
 }
 
 function Header(props: any) {
-  const { user } = useContext(UserContext);
+  const { user, setUser } = useContext(UserContext);
   return (
     <View style={styles.header}>
       <TouchableOpacity style={styles.cancelButton} onPress={props.cancel}>
@@ -36,7 +36,7 @@ function Header(props: any) {
       </TouchableOpacity>
       <Text style={styles.title}>{props.name}</Text>
       <TouchableOpacity style={styles.doneButton} onPress={async () => {
-        var val = await EditUserAttrib(user, props.attrib, props.value, props.func);
+        var val = await EditUserAttrib(user, props.attrib, props.value, props.func, setUser);
         if (val) {
           props.navigation.navigate("Profile");
       }}}>

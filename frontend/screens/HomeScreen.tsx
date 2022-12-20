@@ -1,31 +1,27 @@
 import {
   StyleSheet,
   ScrollView,
-  Image,
   TouchableOpacity,
   TextInput,
+  Image
 } from "react-native";
 
-import React, { ReactNode, useEffect, useState, useContext } from "react";
+import React, { useEffect, useState, useContext } from "react";
 import { SearchFriend } from "../firebase/library";
 import { Text, View } from "../components/Themed";
 import { RootTabScreenProps } from "../types";
 import { getStorage, ref, getDownloadURL } from "firebase/storage";
 import { UserContext } from "../components/UserContext";
 import { GetGroupMembers } from "../firebase/library";
-import { loadAsync } from "expo-font";
 import { db } from "../firebase/index";
-import { onValue, ref as dbref } from "firebase/database";
-import { useLinkProps } from "@react-navigation/native";
-import ExpoFastImage from 'expo-fast-image';
-
-
+import { get, ref as dbref } from "firebase/database";
+import CachedImage from "react-native-expo-cached-image";
 
 const Card = (props: any) => {
   return (
     <View style={styles.post}>
       <View style={styles.postHeader}>
-        <ExpoFastImage style={styles.pfp} source={{ uri: props.pfp }} />
+        <CachedImage style={styles.pfp} source={{ uri: props.pfp }} />
         <View style={styles.captionBox}>
           <Text style={styles.postTitle}>
             <Text style={styles.postTitleName}>{props.person1} </Text>
@@ -33,7 +29,7 @@ const Card = (props: any) => {
           </Text>
         </View>
       </View>
-      <ExpoFastImage style={styles.postImage} source={{ uri: props.pic }} />
+      <CachedImage style={styles.postImage} source={{ uri: props.pic }} />
       <View style={styles.tagsLikes}>
         <View style={styles.tagsContainer}>
           <View style={styles.tags}>
@@ -102,9 +98,7 @@ function SettingsHandler(props: any) {
 function Logo(props: any) {
   return (
     <TouchableOpacity
-      onPress={() => {
-        props.function();
-      }}
+      onPress={() => props.function()}
     >
       <Image
         style={{
@@ -126,6 +120,7 @@ interface Person {
 }
 
 async function PopulateArray(user: any) {
+  console.log("PopulateArray");
   let groupMembers: Person[] = [];
   var groupArray = user.groups;
 
@@ -139,104 +134,60 @@ async function PopulateArray(user: any) {
     );
     imageURL = (await getDownloadURL(fileRef));
     return imageURL;
-
   }
-
-  for (const groupname of groupArray) {
-    //console.log(groupname);
-    let array = [];
-    const func1 = async () => {
-      const promise = await GetGroupMembers(groupname);
-      return promise;
-    };
-
-    func1().then((members) => {
-      array = members;
-      for (const member of array) {
-        if (typeof (member) == "string") {
-          console.log("member: " + member);
-          let image;
-          let tag;
-          const dailyRef = dbref(db, "groups/" + groupname + "/users/" + member + "/tag");
-          onValue(dailyRef, (snapshot) => {
-            const data = snapshot.val();
-            console.log("here is data: " + data);
-            if (data) {
-              tag = data;
-              getImage(member, groupname, tag)
-                .then((URL) => {
-                  //console.log("URL HERE " + imageURL)
-                  image = URL;
-                  let pfpImage = "";
-                  console.log("IMAGE HERE" + image + "////////////");
-                  const userRef = dbref(db, "users/" + member);
-                  onValue(userRef, (snapshot) => {
-                    const data = snapshot.val();
-                    if (data.profilePhotoRef) {
-                      pfpImage = data.profilePhotoRef;
-                    }
-                  });
-                  const tempPerson: Person = {
-                    person1: member,
-                    tag1: tag,
-                    pfp: pfpImage,
-                    pic: image,
-                  };
-                  //console.log(tempPerson.pfp);
-                  //console.log("pushing");
-                  groupMembers.push(tempPerson);
-                  // console.log("group members array: " + groupMembers);
-                })
-                .catch((error) => {
-                  console.log(error);
-                });
-            }
-          })
-
-        }
-      }
-    });
+  
+  for (const groupName of groupArray) {
+    console.log("groupName: " + groupName);
+    const members = await GetGroupMembers(groupName);
+    for (const member of members) {
+      console.log("member: " + member);
+      const dailyRef = dbref(db, "groups/" + groupName + "/tags/" + member);
+      //get tag
+      let tag: string = await get(dailyRef).then((snapshot) => 
+        (snapshot.exists()) ? snapshot.val() : ""
+      );
+      if (!tag)
+        continue;
+      let image: string = await getImage(member, groupName, tag);
+      const userRef = dbref(db, "users/" + member);
+      let pfpImage: string = await get(userRef).then((snapshot) => {
+        const data = (snapshot.exists()) ? snapshot.val() : null;
+        return (data && data.profilePhotoRef) ? data.profilePhotoRef : "";});
+      const person: Person = {
+        person1: member,
+        tag1: tag,
+        pfp: pfpImage,
+        pic: image
+      };
+      groupMembers.push(person);
+    }
   }
-  //console.log("group members array: " + groupMembers);
   return groupMembers;
 }
 
-
-
 export default function HomeScreen({ navigation }: RootTabScreenProps<"Home">) {
-  // const [postData, setGroupData] = React.useState<Person[]>(PopulateArray());
-  //const postData = PopulateArray();
-  // useEffect(() => {
-  //   postData = PopulateArray();
-  // });
   const { user } = useContext(UserContext);
   const [searchText, setSearchText] = useState("");
   const [friendFound, setFriendFound] = useState(false);
   const [friendName, setFriendName] = useState("");
   const [statusMessage, setStatus] = useState("");
 
-  var [loaded, setLoaded] = useState(true);
   var [postData, setPostData] = React.useState<Person[]>();
   var reloadFunction = async () => {
-    console.log("before populating array");
+    console.log("reloadFunction");
     const data = await PopulateArray(user);
-    console.log("after populating array");
     const dataValue = data;
-    console.log("the data: " + dataValue);
     return dataValue;
   };
 
-  const reload = async (data: number) => {
+  const reload = async () => {
+    console.log("reload");
     setPostData(await reloadFunction());
-    console.log("finished reloading");
-    console.log("data: " + postData);
-    setLoaded(!loaded);
   };
 
   useEffect(() => {
-    // reloadFunction();
-    console.log("loaded Value: " + loaded);
-  }, [loaded]);
+    reload();
+  }, []);
 
   var searchFriend = async (input: string) => {
     setFriendName(input);
@@ -264,7 +215,7 @@ export default function HomeScreen({ navigation }: RootTabScreenProps<"Home">) {
           backgroundColor: "transparent",
         }}
       >
-        <Logo loaded={loaded} function={reload}></Logo>
+        <Logo function={() => reload()}></Logo>
         <SettingsButton {...navigation} />
       </View>
       <View style={{ paddingTop: "5%" }}>
@@ -287,10 +238,11 @@ export default function HomeScreen({ navigation }: RootTabScreenProps<"Home">) {
         }}
         style={styles.body}
       >
-        {postData?.map((note: any) => {
+        {postData?.map((note: any, index: number) => {
           if (text == undefined || text == "" || text == note.tag1){
           return (
             <Card
+              key={index}
               person1={note.person1}
               pic={note.pic}
               pfp={note.pfp}

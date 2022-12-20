@@ -2,6 +2,7 @@ import { set, update, ref, get, child, remove, push } from "firebase/database";
 import { db } from "../firebase/index.js";
 
 export function EditUserAttrib(userobj, attrib, value, func, setUser) {
+    var updatedUser = userobj;
     var userExists = true;
     const dbref = ref(db, 'users/' + userobj.username);
     if (attrib != "username") {
@@ -25,8 +26,13 @@ export function EditUserAttrib(userobj, attrib, value, func, setUser) {
             }).catch((error) => {
                 console.error(error);
             });
+            const userRef = ref(db, "users/" + value);
+            onValue(userRef, (snap) => {
+                const data = snap.val();
+                setUser(data);
+            });
             remove(ref(db, 'users/' + userobj.username));
-            userobj.username = value;
+            console.log(updatedUser);
             return true;
         });
     }

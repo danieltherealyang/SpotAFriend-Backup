@@ -58,7 +58,7 @@ export default function PostScreen({
 
     let imageURL = (await getDownloadURL(fileRef)).toString();
     console.log(imageURL);
-    //set(dbref(db, "groups/" + pickedGroup + "/users/" + username + "/"), { tag: pickedTag });
+    update(dbref(db, "groups/" + pickedGroup + "/tags/"), {[username] : pickedTag});
     update(dbref(db, "users/" + user.username), { dailyPhotoRef: imageURL });
   }
 

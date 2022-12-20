@@ -7,7 +7,8 @@ import { storage } from "../firebase/index";
 import { ref, getDownloadURL, uploadBytesResumable } from "firebase/storage";
 import * as ImagePicker from "expo-image-picker";
 import { db } from "../firebase/index";
-import { Image as CacheImage} from "react-native-expo-image-cache";
+import CachedImage from "react-native-expo-cached-image";
+
 import {
   getDatabase,
   onValue,
@@ -27,12 +28,13 @@ export default function ProfileScreen({
   let imageURL = "";
   const cancelFunction = () => navigation.navigate("Profile");
   const userRef = dbref(db, "users/" + username);
-  onValue(userRef, (snapshot) => {
-    const data = snapshot.val();
-    if (data.profilePhotoRef) {
-      imageURL = data.profilePhotoRef;
-    }
-  });
+  if (userRef)
+    onValue(userRef, (snapshot) => {
+      const data = snapshot.val();
+      if (data && data.profilePhotoRef) {
+        imageURL = data.profilePhotoRef;
+      }
+    });
   const pickImage = async () => {
     let result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.All,
@@ -53,7 +55,7 @@ export default function ProfileScreen({
     <View style={styles.container}>
       {imageURL === "" ? null : (
         <View>
-          <Image style={styles.targetImage} source={{ uri: imageURL }} />
+          <CachedImage style={styles.targetImage} source={{ uri: imageURL }} />
         </View>
       )}
       <TouchableOpacity style={styles.row} onPress={async () => await pickImage()}>

@@ -8,7 +8,7 @@ import {
   Pressable,
 } from "react-native";
 
-import React, { ReactNode, useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 
 import { GetGroupMembers } from "../firebase/library";
 import { useContext } from "react";
@@ -17,6 +17,7 @@ import { UserContext } from "../components/UserContext.js";
 import { Text, View } from "../components/Themed";
 import { RootTabScreenProps } from "../types";
 import { faker } from "@faker-js/faker";
+import CachedImage from "react-native-expo-cached-image";
 
 import {
   set,
@@ -130,7 +131,7 @@ const GroupCard = (props: any) => {
                 {GROUPNAME}'s target of the day
               </Text>
             </View>
-            <Image style={styles.targetImage} source={{ uri: uri }} />
+            <CachedImage style={styles.targetImage} source={{ uri: uri }} />
             <View style={{ backgroundColor: "transparent" }}>
               <Text style={styles.modalText}>today's target: {target}</Text>
               <Text style={styles.names}>all members: {memberString}</Text>
@@ -154,7 +155,7 @@ const GroupCard = (props: any) => {
           style={styles.groupOpen}
           onPress={() => setModalVisible(true)}
         >
-          <Image style={styles.groupImage} source={{ uri: uri }} />
+          <CachedImage style={styles.groupImage} source={{ uri: uri }} />
           <View
             style={{
               margin: "5%",
